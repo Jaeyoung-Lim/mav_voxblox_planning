@@ -33,3 +33,8 @@
 
 # I own a mac
 .DS_Store
+
+# Clion artifacts
+*.idea*
+
+*.swp
