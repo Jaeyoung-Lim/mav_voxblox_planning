@@ -403,8 +403,9 @@ double Loco<N>::computeTotalCostAndGradients(
   std::vector<Eigen::VectorXd> grad_c;
   std::vector<Eigen::VectorXd> grad_g;
   std::vector<Eigen::VectorXd> grad_w;
+  std::vector<Eigen::VectorXd> grad_h;
 
-  double J_d = 0.0, J_c = 0.0, J_g = 0.0, J_w = 0.0;
+  double J_d = 0.0, J_c = 0.0, J_g = 0.0, J_w = 0.0, J_h = 0.0;
 
   mav_trajectory_generation::timing::Timer timer_cost_grad_d(
       "loco/cost_grad_d");
@@ -420,6 +421,15 @@ double Loco<N>::computeTotalCostAndGradients(
     J_c = computeCollisionCostAndGradient(&grad_c);
   } else {
     J_c = computeCollisionCostAndGradient(nullptr);
+  }
+  timer_cost_grad_c.Stop();
+
+  mav_trajectory_generation::timing::Timer timer_cost_grad_h(
+      "loco/cost_grad_h");
+  if (gradients != nullptr) {
+    J_h = computeCollisionCostAndGradient(&grad_h);
+  } else {
+    J_h = computeCollisionCostAndGradient(nullptr);
   }
   timer_cost_grad_c.Stop();
 
@@ -446,14 +456,14 @@ double Loco<N>::computeTotalCostAndGradients(
   }
 
   double cost = config_.w_d * J_d + config_.w_c * J_c + config_.w_g * J_g +
-                config_.w_w * J_w;
+                config_.w_w * J_w + config_.w_h * J_h;
 
   // Add the gradients too...
   if (gradients != nullptr) {
     gradients->clear();
     gradients->resize(K_, Eigen::VectorXd::Zero(num_free_));
     for (int k = 0; k < K_; ++k) {
-      (*gradients)[k] = config_.w_d * grad_d[k] + config_.w_c * grad_c[k];
+      (*gradients)[k] = config_.w_d * grad_d[k] + config_.w_c * grad_c[k] + config_.w_h * grad_h[k];
       if (config_.soft_goal_constraint && !grad_g.empty()) {
         (*gradients)[k] += config_.w_g * grad_g[k];
       }
