@@ -151,6 +151,10 @@ class Loco {
   // Just the J_c part.
   double computeCollisionCostAndGradient(
       std::vector<Eigen::VectorXd>* gradients) const;
+  // Just the J_h part.
+  double computeUncertaintyCostAndGradient(
+      std::vector<Eigen::VectorXd>* gradients) const;
+
   // The J_g part if using soft goals.
   double computeGoalCostAndGradient(
       std::vector<Eigen::VectorXd>* gradients) const;
@@ -164,12 +168,20 @@ class Loco {
       double t, const Eigen::VectorXd& position,
       std::vector<Eigen::VectorXd>* gradients) const;
 
-  double computePotentialCostAndGradient(const Eigen::VectorXd& position,
+  double computeOccupancyCostAndGradient(const Eigen::VectorXd& position,
                                          Eigen::VectorXd* gradient) const;
+  double computeEntropyCostAndGradient(const Eigen::VectorXd& position,
+                                         Eigen::VectorXd* gradient) const;
+
   double potentialFunction(double distance) const;
+  double entropyFunction(double distance) const;
   void potentialGradientFunction(double distance,
                                  const Eigen::VectorXd& distance_gradient,
                                  Eigen::VectorXd* gradient_out) const;
+  void entropyGradientFunction(double distance,
+                                 const Eigen::VectorXd& distance_gradient,
+                                 Eigen::VectorXd* gradient_out) const;
+
   // Convenience.
   void getTVector(double t, Eigen::VectorXd* T) const;
 
