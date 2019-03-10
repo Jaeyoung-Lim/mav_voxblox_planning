@@ -174,12 +174,12 @@ class Loco {
                                          Eigen::VectorXd* gradient) const;
 
   double potentialFunction(double distance) const;
-  double entropyFunction(double distance) const;
+  double entropyFunction(double occprob) const;
   void potentialGradientFunction(double distance,
                                  const Eigen::VectorXd& distance_gradient,
                                  Eigen::VectorXd* gradient_out) const;
-  void entropyGradientFunction(double distance,
-                                 const Eigen::VectorXd& distance_gradient,
+  void entropyGradientFunction(double occprob,
+                                 const Eigen::VectorXd& occprob_gradient,
                                  Eigen::VectorXd* gradient_out) const;
 
   // Convenience.

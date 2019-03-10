@@ -1040,11 +1040,16 @@ double Loco<N>::potentialFunction(double distance) const {
 }
 
 template <int N>
-double Loco<N>::entropyFunction(double distance) const {
+double Loco<N>::entropyFunction(double occprob) const {
   double result = 0.0;
+  // Matlab Implementation: 
+  // if occ_prob <= 1e-5
+  //   occ_prob = 1e-5; % Handle exception where occ_prob = 0
+  // end
+  // occ_entropy = (-(1-occ_prob) * log2(1-occ_prob) - occ_prob * log2(occ_prob));  
+  if(occprob <= 1e-5) occprob = 1e-5; // Handle exception where occ_prob = 0.0;
 
-  result = distance;
-  
+  result = (-(1.0 - occprob) * std::log2(1.0 - occprob) - occprob * std::log2(occprob));  
   return result;
 }
 
@@ -1067,19 +1072,14 @@ void Loco<N>::potentialGradientFunction(
 
 template <int N>
 void Loco<N>::entropyGradientFunction(
-    double distance, const Eigen::VectorXd& distance_gradient,
+    double occprob, const Eigen::VectorXd& occprob_gradient,
     Eigen::VectorXd* gradient_out) const {
-  double d = distance - config_.robot_radius;
-
-  if (d < 0) {
-    *gradient_out = -distance_gradient;
-  } else if (d <= config_.epsilon) {
-    *gradient_out =
-        1.0 / config_.epsilon *
-        (d * distance_gradient - config_.epsilon * distance_gradient);
-  } else {
-    gradient_out->setZero(K_);
-  }
+  // if occ_prob <= 1e-5
+  //     occ_prob = 1e-5; % Handle exception where occ_prob = 0
+  // end
+  // docc_entropy = log2((1-occ_prob)/occ_prob)*docc_prob;
+  if(occprob <= 1e-5) occprob = 1e-5; // Handle exception where occ_prob = 0.0;
+  *gradient_out = std::log2((1-occprob)/occprob) * occprob_gradient;
 }
 
 
