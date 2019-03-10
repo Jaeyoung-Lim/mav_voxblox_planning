@@ -122,6 +122,8 @@ class Loco {
   void setWg(double w_g) { config_.w_g = w_g; }
   double getWw() const { return config_.w_w; }
   void setWw(double w_w) { config_.w_w = w_w; }
+  double getWh() const { return config_.w_h; }
+  void setWh(double w_h) { config_.w_h = w_h; }
   double getCollisionSamplingDt() const {
     return config_.min_collision_sampling_dt;
   }
