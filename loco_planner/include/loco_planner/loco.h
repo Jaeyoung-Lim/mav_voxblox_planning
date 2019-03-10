@@ -27,6 +27,7 @@ class Loco {
     bool soft_goal_constraint = false;
     double w_d = 0.1;   // Smoothness cost weight.
     double w_c = 10.0;  // Collision cost weight.
+    double w_h = 10.0; // Uncertainty cost weight.
     double w_g = 2.5;   // Soft goal cost weight (if using soft goals).
     double w_w = 1.0;   // Waypoint cost weight (if waypoints set).
     double min_collision_sampling_dt = 0.1;
@@ -121,6 +122,8 @@ class Loco {
   void setWg(double w_g) { config_.w_g = w_g; }
   double getWw() const { return config_.w_w; }
   void setWw(double w_w) { config_.w_w = w_w; }
+  double getWh() const { return config_.w_h; }
+  void setWh(double w_h) { config_.w_h = w_h; }
   double getCollisionSamplingDt() const {
     return config_.min_collision_sampling_dt;
   }
@@ -150,6 +153,10 @@ class Loco {
   // Just the J_c part.
   double computeCollisionCostAndGradient(
       std::vector<Eigen::VectorXd>* gradients) const;
+  // Just the J_h part.
+  double computeUncertaintyCostAndGradient(
+      std::vector<Eigen::VectorXd>* gradients) const;
+
   // The J_g part if using soft goals.
   double computeGoalCostAndGradient(
       std::vector<Eigen::VectorXd>* gradients) const;
@@ -163,12 +170,20 @@ class Loco {
       double t, const Eigen::VectorXd& position,
       std::vector<Eigen::VectorXd>* gradients) const;
 
-  double computePotentialCostAndGradient(const Eigen::VectorXd& position,
+  double computeOccupancyCostAndGradient(const Eigen::VectorXd& position,
                                          Eigen::VectorXd* gradient) const;
+  double computeEntropyCostAndGradient(const Eigen::VectorXd& position,
+                                         Eigen::VectorXd* gradient) const;
+
   double potentialFunction(double distance) const;
+  double entropyFunction(double occprob) const;
   void potentialGradientFunction(double distance,
                                  const Eigen::VectorXd& distance_gradient,
                                  Eigen::VectorXd* gradient_out) const;
+  void entropyGradientFunction(double occprob,
+                                 const Eigen::VectorXd& occprob_gradient,
+                                 Eigen::VectorXd* gradient_out) const;
+
   // Convenience.
   void getTVector(double t, Eigen::VectorXd* T) const;
 
