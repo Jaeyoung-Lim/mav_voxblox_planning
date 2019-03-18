@@ -935,13 +935,17 @@ double Loco<N>::computePositionSoftCostAndGradient(
   int segment_index = i;
   double segment_time = accumulated_time;
 
-  Eigen::VectorXd T_desired_seg;
+  Eigen::VectorXd T_desired_seg, T_desired_start;
   getTVector(segment_time, &T_desired_seg);
+  getTVector(0.0, &T_desired_start);
 
   // I guess the best is to just pad out T_g with 0s up to last seg.
   Eigen::VectorXd T(num_segments * N);
   T.setZero();
   T.segment<N>(segment_index * N) = T_desired_seg;
+  Eigen::VectorXd T_start(num_segments * N);
+  T_start.setZero();
+  T_start.segment<N>(0 * N) = T_desired_start;
 
   // Get d_p and d_f vector for all axes.
   std::vector<Eigen::VectorXd> d_p_vec;
@@ -959,6 +963,7 @@ double Loco<N>::computePositionSoftCostAndGradient(
       L_.block(0, num_fixed_, L_.rows(), num_free_);
 
   Eigen::VectorXd actual_pos = Eigen::VectorXd::Zero(K_);
+  Eigen::VectorXd start_pos = Eigen::VectorXd::Zero(K_);
   for (int k = 0; k < K_; ++k) {
     Eigen::VectorXd d_all(num_fixed_ + num_free_);
     d_all.head(num_fixed_) = d_f_vec[k];
@@ -969,10 +974,14 @@ double Loco<N>::computePositionSoftCostAndGradient(
     p_vec[k] = L_ * d_all;
 
     actual_pos(k) = T.transpose() * p_vec[k];
+    start_pos(k) = T_start.transpose() * p_vec[k];
   }
 
-  J_w = (actual_pos - position).norm();
-
+  double r = 0.01;
+  double dg = (start_pos - position).norm() + r;
+  
+  J_w = (1/dg) * (dg - (position - actual_pos).norm());
+  
   // Fill in gradients too.
   if (gradients != nullptr) {
     gradients->resize(K_);
@@ -983,7 +992,7 @@ double Loco<N>::computePositionSoftCostAndGradient(
       df_dpk.setZero();
       df_dpk.row(k) = T;
       (*gradients)[k] =
-          ((actual_pos - position) / J_w).transpose() * df_dpk * L_pp;
+          ((actual_pos - position) / dg).transpose() * df_dpk * L_pp;
     }
   }
 
@@ -1040,16 +1049,16 @@ double Loco<N>::potentialFunction(double distance) const {
 }
 
 template <int N>
-double Loco<N>::entropyFunction(double occprob) const {
+double Loco<N>::entropyFunction(double distance) const {
   double result = 0.0;
   // Matlab Implementation: 
   // if occ_prob <= 1e-5
   //   occ_prob = 1e-5; % Handle exception where occ_prob = 0
   // end
   // occ_entropy = (-(1-occ_prob) * log2(1-occ_prob) - occ_prob * log2(occ_prob));  
-  if(occprob <= 1e-5) occprob = 1e-5; // Handle exception where occ_prob = 0.0;
+  if(distance <= 1e-5) distance = 1e-5; // Handle exception where occ_prob = 0.0;
 
-  result = (-(1.0 - occprob) * std::log2(1.0 - occprob) - occprob * std::log2(occprob));  
+  result = (-(1.0 - distance) * std::log2(1.0 - distance) - distance * std::log2(distance));  
   return result;
 }
 
@@ -1072,14 +1081,14 @@ void Loco<N>::potentialGradientFunction(
 
 template <int N>
 void Loco<N>::entropyGradientFunction(
-    double occprob, const Eigen::VectorXd& occprob_gradient,
+    double distance, const Eigen::VectorXd& distance_gradient,
     Eigen::VectorXd* gradient_out) const {
   // if occ_prob <= 1e-5
   //     occ_prob = 1e-5; % Handle exception where occ_prob = 0
   // end
   // docc_entropy = log2((1-occ_prob)/occ_prob)*docc_prob;
-  if(occprob <= 1e-5) occprob = 1e-5; // Handle exception where occ_prob = 0.0;
-  *gradient_out = std::log2((1-occprob)/occprob) * occprob_gradient;
+  if(distance <= 1e-5) distance = 1e-5; // Handle exception where occ_prob = 0.0;
+  *gradient_out = std::log2((1-distance)/distance) * distance_gradient;
 }
 
 

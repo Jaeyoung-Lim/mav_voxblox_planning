@@ -29,7 +29,7 @@ class Loco {
     double w_c = 10.0;  // Collision cost weight.
     double w_h = 10.0; // Uncertainty cost weight.
     double w_g = 2.5;   // Soft goal cost weight (if using soft goals).
-    double w_w = 1.0;   // Waypoint cost weight (if waypoints set).
+    double w_w = 0.0;   // Waypoint cost weight (if waypoints set).
     double min_collision_sampling_dt = 0.1;
     double map_resolution = 0.1;  // Size of voxels in the map.
     bool verbose = false;
@@ -176,12 +176,12 @@ class Loco {
                                          Eigen::VectorXd* gradient) const;
 
   double potentialFunction(double distance) const;
-  double entropyFunction(double occprob) const;
+  double entropyFunction(double distance) const;
   void potentialGradientFunction(double distance,
                                  const Eigen::VectorXd& distance_gradient,
                                  Eigen::VectorXd* gradient_out) const;
-  void entropyGradientFunction(double occprob,
-                                 const Eigen::VectorXd& occprob_gradient,
+  void entropyGradientFunction(double distance,
+                                 const Eigen::VectorXd& distance_gradient,
                                  Eigen::VectorXd* gradient_out) const;
 
   // Convenience.
