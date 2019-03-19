@@ -747,8 +747,8 @@ double Loco<N>::computeUncertaintyCostAndGradient(
   // Could probably do something more intelligent here as well.
   // But general idea: evaluate at a time, see what the distance is, if it's
   // far enough from the last point, just evalute the gradient.
-  double J_c = 0;
-  std::vector<Eigen::VectorXd> grad_c(K_, Eigen::VectorXd::Zero(num_free_));
+  double J_h = 0;
+  std::vector<Eigen::VectorXd> grad_h(K_, Eigen::VectorXd::Zero(num_free_));
 
   entr_cost_prep_timer.Stop();
 
@@ -807,38 +807,38 @@ double Loco<N>::computeUncertaintyCostAndGradient(
 
       // Okay figure out the cost and gradient of the potential map at this
       // point.
-      Eigen::VectorXd d_c_d_f(K_);
+      Eigen::VectorXd d_h_d_f(K_);
 
       mav_trajectory_generation::timing::Timer timer_map_lookup(
           "loco/map_lookup");
-      double c = 0.0;
+      double h = 0.0;
       if (gradients != nullptr) {
-        c = computeOccupancyCostAndGradient(position, &d_c_d_f);
+        h = computeEntropyCostAndGradient(position, &d_h_d_f);
       } else {
-        c = computeOccupancyCostAndGradient(position, nullptr);
+        h = computeEntropyCostAndGradient(position, nullptr);
       }
       timer_map_lookup.Stop();
 
-      double cost = c * velocity.norm() * time_int;
+      double cost = h * velocity.norm() * time_int;
 
-      J_c += cost;
+      J_h += cost;
 
       mav_trajectory_generation::timing::Timer entr_cost_grad_timer(
           "loco/entr_cost_grad");
 
       if (gradients != nullptr) {
         // Gotta make sure the norm is non-zero, since we divide by it later.
-        if (velocity.norm() > 1e-6 && (cost > 0.0 || d_c_d_f.norm() > 0.0)) {
+        if (velocity.norm() > 1e-6 && (cost > 0.0 || d_h_d_f.norm() > 0.0)) {
           // Now calculate the gradient per axis.
           for (int k = 0; k < K_; ++k) {
-            Eigen::VectorXd grad_c_k =
-                (velocity.norm() * time_int * d_c_d_f(k) * T.transpose() *
+            Eigen::VectorXd grad_h_k =
+                (velocity.norm() * time_int * d_h_d_f(k) * T.transpose() *
                      L_pp +
-                 time_int * c * velocity(k) / velocity.norm() * T.transpose() *
+                 time_int * h * velocity(k) / velocity.norm() * T.transpose() *
                      V_ * L_pp)
                     .transpose();
 
-            grad_c[k] += grad_c_k;
+            grad_h[k] += grad_h_k;
           }
         }
       }
@@ -857,9 +857,9 @@ double Loco<N>::computeUncertaintyCostAndGradient(
   if (gradients != nullptr) {
     gradients->clear();
     gradients->resize(K_, Eigen::VectorXd(num_free_));
-    *gradients = grad_c;
+    *gradients = grad_h;
   }
-  return J_c;
+  return J_h;
 }
 
 template <int N>
@@ -1035,17 +1035,20 @@ void Loco<N>::printMatlabSampledTrajectory(double dt) const {
 template <int N>
 double Loco<N>::potentialFunction(double distance) const {
   double result = 0.0;
-  double d = distance - config_.robot_radius;
+  // double d = distance - config_.robot_radius;
 
-  if (d < 0) {
-    result = -d + 0.5 * config_.epsilon;
-  } else if (d <= config_.epsilon) {
-    double epsilon_distance = d - config_.epsilon;
-    result = 0.5 * 1.0 / config_.epsilon * epsilon_distance * epsilon_distance;
-  } else {
-    result = 0.0;
-  }
+  // if (d < 0) {
+  //   result = -d + 0.5 * config_.epsilon;
+  // } else if (d <= config_.epsilon) {
+  //   double epsilon_distance = d - config_.epsilon;
+  //   result = 0.5 * 1.0 / config_.epsilon * epsilon_distance * epsilon_distance;
+  // } else {
+  //   result = 0.0;
+  // }
+  // return result;
+  result = distance;
   return result;
+
 }
 
 template <int N>
@@ -1057,7 +1060,6 @@ double Loco<N>::entropyFunction(double distance) const {
   // end
   // occ_entropy = (-(1-occ_prob) * log2(1-occ_prob) - occ_prob * log2(occ_prob));  
   if(distance <= 1e-5) distance = 1e-5; // Handle exception where occ_prob = 0.0;
-
   result = (-(1.0 - distance) * std::log2(1.0 - distance) - distance * std::log2(distance));  
   return result;
 }
@@ -1066,17 +1068,19 @@ template <int N>
 void Loco<N>::potentialGradientFunction(
     double distance, const Eigen::VectorXd& distance_gradient,
     Eigen::VectorXd* gradient_out) const {
-  double d = distance - config_.robot_radius;
+  // double d = distance - config_.robot_radius;
 
-  if (d < 0) {
-    *gradient_out = -distance_gradient;
-  } else if (d <= config_.epsilon) {
-    *gradient_out =
-        1.0 / config_.epsilon *
-        (d * distance_gradient - config_.epsilon * distance_gradient);
-  } else {
-    gradient_out->setZero(K_);
-  }
+  // if (d < 0) {
+  //   *gradient_out = -distance_gradient;
+  // } else if (d <= config_.epsilon) {
+  //   *gradient_out =
+  //       1.0 / config_.epsilon *
+  //       (d * distance_gradient - config_.epsilon * distance_gradient);
+  // } else {
+  //   gradient_out->setZero(K_);
+  // }
+
+  *gradient_out = distance_gradient;
 }
 
 template <int N>
