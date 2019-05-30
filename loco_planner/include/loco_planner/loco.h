@@ -24,7 +24,7 @@ class Loco {
         mav_trajectory_generation::derivative_order::JERK;
     double epsilon = 0.5;
     double robot_radius = 0.5;
-    bool soft_goal_constraint = false;
+    bool soft_goal_constraint = true;
     double w_d = 0.1;   // Smoothness cost weight.
     double w_c = 10.0;  // Collision cost weight.
     double w_g = 2.5;   // Soft goal cost weight (if using soft goals).

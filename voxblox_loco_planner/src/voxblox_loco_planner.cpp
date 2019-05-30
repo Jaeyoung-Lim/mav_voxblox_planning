@@ -24,6 +24,10 @@ VoxbloxLocoPlanner::VoxbloxLocoPlanner(const ros::NodeHandle& nh,
   nh_private_.param("frame_id", frame_id_, frame_id_);
   nh_private_.param("planning_horizon_m", planning_horizon_m_,
                     planning_horizon_m_);
+  nh_private_.param("random_restart_magnitude", random_restart_magnitude_,
+                    random_restart_magnitude_);
+  nh_private_.param("num_random_restarts", num_random_restarts_,
+                    num_random_restarts_);
 
   loco_.setRobotRadius(constraints_.robot_radius);
 

@@ -51,12 +51,16 @@
       <param name="mpc_prediction_horizon" value="300" />
 
       <param name="robot_radius" value="0.5" />
-      <param name="planning_horizon_m" value="4.0" />
+      <param name="planning_horizon_m" value="6.0" />
       <param name="autostart" value="true" />
       <param name="verbose" value="true" />
       <param name="v_max" value="2.0" />
       <param name="a_max" value="2.0" />
       <param name="avoid_collisions" value="true" />
+      <param name="random_restart_magnitude" value="1.0" />
+      <param name="num_random_restarts" value="10" />
+      <param name="goal_selector_strategy" value="local_exploration" />
+      <param name="yaw_rate_max" value="1.4"/>
     </node>
   </group>
 </launch>
